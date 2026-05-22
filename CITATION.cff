@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this project, cite the repository and the UCI Online Retail II dataset."
+title: "Industrial Decision Intelligence Lab"
+authors:
+  - family-names: "Jeon"
+    given-names: "Sihyeon"
+year: 2026
+license: MIT
+repository-code: "https://github.com/SihyeonJeon/industrial-decision-intelligence-lab"
+references:
+  - type: dataset
+    title: "Online Retail II"
+    authors:
+      - family-names: "Chen"
+        given-names: "Daqing"
+    year: 2012
+    doi: "10.24432/C5CG6D"

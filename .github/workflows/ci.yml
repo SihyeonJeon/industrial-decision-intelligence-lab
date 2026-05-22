@@ -1,0 +1,20 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install
+        run: uv sync
+      - name: Lint
+        run: uv run ruff check src tests
+      - name: Test
+        run: uv run pytest
+      - name: Synthetic smoke run
+        run: uv run decision-lab run --synthetic --report-dir /tmp/decision-lab-smoke

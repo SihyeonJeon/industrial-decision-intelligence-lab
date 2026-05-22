@@ -4,14 +4,19 @@ version = "0.1.0"
 description = "Forecast-to-inventory decision simulation on retail transaction data"
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
 dependencies = [
     "matplotlib>=3.8",
     "numpy>=1.26",
     "openpyxl>=3.1",
     "pandas>=2.2",
     "pytest>=8.0",
+    "ruff>=0.8",
     "scikit-learn>=1.5",
 ]
+
+[project.urls]
+Repository = "https://github.com/SihyeonJeon/industrial-decision-intelligence-lab"
 
 [project.scripts]
 decision-lab = "decision_lab.cli:main"
