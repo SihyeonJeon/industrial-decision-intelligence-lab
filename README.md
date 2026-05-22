@@ -30,6 +30,10 @@ Outputs:
 - `reports/figures/policy_comparison.png`
 - `reports/figures/service_frontier.png`
 
+## Result View
+
+![Cost-service frontier](reports/figures/service_frontier.png)
+
 ## Current Result
 
 UCI Online Retail II, top 12 SKUs, final 60-day simulation:
