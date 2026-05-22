@@ -1,0 +1,55 @@
+{
+  "project": "industrial-decision-intelligence-lab",
+  "evidence_grade": "dataset_simulation",
+  "claim_allowed": false,
+  "scope_note": "UCI Online Retail II simulation, not production inventory advice",
+  "forecast": {
+    "split": {
+      "train_rows": 7812,
+      "validation_rows": 540,
+      "test_rows": 720,
+      "test_start": "2011-10-11",
+      "test_end": "2011-12-09"
+    },
+    "baseline": {
+      "mae": 126.7,
+      "wape": 1.071018491341356,
+      "bias": -0.004931024361608453
+    },
+    "model": {
+      "mae": 101.89877547762775,
+      "wape": 0.8613691616541471,
+      "bias": 0.09416660213477938
+    }
+  },
+  "decision": {
+    "baseline": {
+      "total_cost": 174450.85081518182,
+      "service_level": 0.957026080335884,
+      "stockout_units": 3660.303607391067,
+      "holding_units": 3995240.9096404393,
+      "average_inventory": 5548.945707833944,
+      "order_units": 149269.69639260892,
+      "sku_count": 12,
+      "days": 60
+    },
+    "model": {
+      "total_cost": 77323.91024636828,
+      "service_level": 0.9279571997216095,
+      "stockout_units": 6136.2455137119,
+      "holding_units": 1319473.204788017,
+      "average_inventory": 1832.6016733166905,
+      "order_units": 82861.4254268247,
+      "sku_count": 12,
+      "days": 60
+    },
+    "cost_delta": 97126.94056881354,
+    "cost_delta_pct": 0.5567581935826302,
+    "service_target": 0.9,
+    "service_delta": -0.029068880614274484,
+    "service_floor_met": true,
+    "cost_improved": true,
+    "decision_gate": "pass",
+    "recommended_policy": "model"
+  }
+}
