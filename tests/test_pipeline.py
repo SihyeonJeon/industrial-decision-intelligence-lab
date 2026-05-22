@@ -39,6 +39,7 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
     assert (tmp_path / "figures" / "policy_comparison.png").exists()
     assert (tmp_path / "figures" / "service_frontier.png").exists()
     assert (tmp_path / "figures" / "sensitivity_grid.png").exists()
+    assert (tmp_path / "figures" / "sku_tradeoffs.png").exists()
 
     saved = json.loads((tmp_path / "decision_report.json").read_text())
     assert saved["scope_note"].startswith("UCI Online Retail II simulation")
@@ -47,6 +48,9 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
     assert saved["sensitivity"]["pass_rate"] == (
         saved["sensitivity"]["pass_count"] / saved["sensitivity"]["scenario_count"]
     )
+    assert saved["sku_diagnostics"]["sku_count"] == 4
+    assert saved["sku_diagnostics"]["cost_improved_count"] <= 4
+    assert saved["sku_diagnostics"]["service_floor_met_count"] <= 4
 
     sensitivity = pd.read_csv(tmp_path / "sensitivity_grid.csv")
     required_columns = {
@@ -65,3 +69,16 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
     assert (passed["service_floor_met"]).all()
     assert (passed["cost_improved"]).all()
     assert (sensitivity[sensitivity["recommended_policy"] == "model"]["decision_gate"] == "pass").all()
+
+    sku_metrics = pd.read_csv(tmp_path / "sku_metrics.csv")
+    sku_columns = {
+        "cost_delta_pct",
+        "service_delta",
+        "model_wape_delta",
+        "model_service_floor_met",
+        "decision_flag",
+    }
+    assert sku_columns.issubset(sku_metrics.columns)
+    accepted = sku_metrics[sku_metrics["decision_flag"] == "accept"]
+    assert (accepted["cost_delta"] > 0).all()
+    assert (accepted["model_service_floor_met"]).all()

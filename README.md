@@ -31,6 +31,7 @@ Outputs:
 - `reports/figures/policy_comparison.png`
 - `reports/figures/service_frontier.png`
 - `reports/figures/sensitivity_grid.png`
+- `reports/figures/sku_tradeoffs.png`
 
 ## Result View
 
@@ -46,6 +47,7 @@ UCI Online Retail II, top 12 SKUs, final 60-day simulation:
 - service floor: `0.900`
 - decision gate: `pass`
 - sensitivity: `9 / 36` tested cost-service scenarios pass
+- SKU diagnostics: `11 / 12` model policies meet the service floor
 
 q=`0.99` is the reliable region in the current grid. Lower service settings
 save inventory but miss the service floor.

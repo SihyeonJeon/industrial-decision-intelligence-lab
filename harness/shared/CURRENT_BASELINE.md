@@ -4,7 +4,7 @@ date: 2026-05-23
 
 project: industrial-decision-intelligence-lab
 
-status: repo published, sensitivity layer complete
+status: repo published, SKU diagnostics complete
 
 ## Dataset
 
@@ -89,6 +89,33 @@ Reading:
 - q=0.99 is the only tested service region that passes the 0.90 floor;
 - lower service quantiles reduce inventory but fail the current service gate;
 - sensitivity output should be shown before any stronger public claim.
+
+## SKU Diagnostics
+
+Generated:
+
+- `reports/sku_metrics.csv`
+- `reports/figures/sku_tradeoffs.png`
+
+Result:
+
+- SKU count: 12
+- cost improved: 12
+- service floor met: 11
+- service risk: 1
+- WAPE worse: 3
+- largest service loss SKU: 22197
+- largest service loss: -0.06444627589031715
+- largest cost saving SKU: 84077
+- largest cost saving: 35362.63076115469
+
+Reading:
+
+- aggregate pass does not imply every SKU is acceptable;
+- SKU 84077 saves the most cost but fails the service floor;
+- three SKUs have worse model WAPE even when decision cost improves;
+- portfolio interpretation should lead with the decision chain and visible
+  failure modes, not with model score alone.
 
 ## Boundary
 

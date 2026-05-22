@@ -51,12 +51,14 @@ def write_report(
             "recommended_policy": recommended_policy,
         },
         "sensitivity": sensitivity_summary or {},
+        "sku_diagnostics": summarize_sku_metrics(sku_metrics),
     }
 
     with (report_dir / "decision_report.json").open("w") as file:
         json.dump(payload, file, indent=2)
 
     sku_metrics.to_csv(report_dir / "sku_metrics.csv", index=False)
+    plot_sku_tradeoffs(report_dir / "figures" / "sku_tradeoffs.png", sku_metrics, service_target)
     plot_policy_comparison(
         report_dir / "figures" / "policy_comparison.png",
         decision_summaries,
@@ -71,7 +73,11 @@ def write_report(
     return payload
 
 
-def build_sku_metrics(predictions: pd.DataFrame, detail: pd.DataFrame) -> pd.DataFrame:
+def build_sku_metrics(
+    predictions: pd.DataFrame,
+    detail: pd.DataFrame,
+    service_target: float,
+) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
     for sku, sku_predictions in predictions.groupby("sku"):
         actual_sum = max(float(sku_predictions["actual"].sum()), 1.0)
@@ -86,8 +92,94 @@ def build_sku_metrics(predictions: pd.DataFrame, detail: pd.DataFrame) -> pd.Dat
                 policy_detail["fulfilled"].sum() / max(policy_detail["actual"].sum(), 1.0)
             )
         row["cost_delta"] = row["baseline_cost"] - row["model_cost"]
+        row["cost_delta_pct"] = row["cost_delta"] / max(float(row["baseline_cost"]), 1.0)
+        row["service_delta"] = row["model_service_level"] - row["baseline_service_level"]
+        row["model_wape_delta"] = row["model_wape"] - row["baseline_wape"]
+        row["model_service_floor_met"] = row["model_service_level"] >= service_target
+        row["decision_flag"] = classify_sku(row)
         rows.append(row)
     return pd.DataFrame(rows).sort_values("cost_delta", ascending=False)
+
+
+def classify_sku(row: dict[str, object]) -> str:
+    cost_improved = float(row["cost_delta"]) > 0
+    service_floor_met = bool(row["model_service_floor_met"])
+    if cost_improved and service_floor_met:
+        return "accept"
+    if cost_improved and not service_floor_met:
+        return "service_risk"
+    if not cost_improved and service_floor_met:
+        return "cost_risk"
+    return "review"
+
+
+def summarize_sku_metrics(sku_metrics: pd.DataFrame) -> dict[str, object]:
+    if sku_metrics.empty:
+        return {
+            "sku_count": 0,
+            "cost_improved_count": 0,
+            "service_floor_met_count": 0,
+            "service_risk_count": 0,
+            "wape_worse_count": 0,
+        }
+
+    largest_service_loss = sku_metrics.sort_values("service_delta").iloc[0]
+    largest_cost_saving = sku_metrics.sort_values("cost_delta", ascending=False).iloc[0]
+    return {
+        "sku_count": int(len(sku_metrics)),
+        "cost_improved_count": int((sku_metrics["cost_delta"] > 0).sum()),
+        "service_floor_met_count": int(sku_metrics["model_service_floor_met"].sum()),
+        "service_risk_count": int((sku_metrics["decision_flag"] == "service_risk").sum()),
+        "wape_worse_count": int((sku_metrics["model_wape_delta"] > 0).sum()),
+        "largest_service_loss_sku": str(largest_service_loss["sku"]),
+        "largest_service_loss": float(largest_service_loss["service_delta"]),
+        "largest_cost_saving_sku": str(largest_cost_saving["sku"]),
+        "largest_cost_saving": float(largest_cost_saving["cost_delta"]),
+    }
+
+
+def plot_sku_tradeoffs(path: Path, sku_metrics: pd.DataFrame, service_target: float) -> None:
+    fig, axis = plt.subplots(figsize=(7.4, 4.8))
+    colors = {
+        "accept": "#2563eb",
+        "service_risk": "#ef4444",
+        "cost_risk": "#f59e0b",
+        "review": "#6b7280",
+    }
+    for flag, rows in sku_metrics.groupby("decision_flag"):
+        axis.scatter(
+            rows["cost_delta_pct"],
+            rows["service_delta"],
+            s=70,
+            color=colors.get(flag, "#6b7280"),
+            alpha=0.88,
+            edgecolor="#111827",
+            linewidth=0.35,
+            label=flag,
+        )
+
+    label_rows = sku_metrics.reindex(
+        sku_metrics["service_delta"].abs().sort_values(ascending=False).head(4).index
+    )
+    for row in label_rows.itertuples(index=False):
+        axis.annotate(
+            str(row.sku),
+            (row.cost_delta_pct, row.service_delta),
+            textcoords="offset points",
+            xytext=(5, 4),
+            fontsize=8,
+        )
+
+    axis.axhline(0, color="#111827", linewidth=0.9, alpha=0.5)
+    axis.axvline(0, color="#111827", linewidth=0.9, alpha=0.5)
+    axis.set_xlabel("cost delta pct")
+    axis.set_ylabel("service delta")
+    axis.set_title(f"SKU tradeoffs at service floor {service_target:.2f}")
+    axis.grid(True, alpha=0.25)
+    axis.legend(loc="best", fontsize=8)
+    fig.tight_layout()
+    fig.savefig(path, dpi=160)
+    plt.close(fig)
 
 
 def plot_policy_comparison(

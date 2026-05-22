@@ -62,5 +62,16 @@
     "median_model_service": 0.8272164971578613,
     "min_model_service": 0.7903671992443656,
     "model_policy_count": 9
+  },
+  "sku_diagnostics": {
+    "sku_count": 12,
+    "cost_improved_count": 12,
+    "service_floor_met_count": 11,
+    "service_risk_count": 1,
+    "wape_worse_count": 3,
+    "largest_service_loss_sku": "22197",
+    "largest_service_loss": -0.06444627589031715,
+    "largest_cost_saving_sku": "84077",
+    "largest_cost_saving": 35362.63076115469
   }
 }

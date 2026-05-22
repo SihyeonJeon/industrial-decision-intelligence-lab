@@ -99,7 +99,7 @@ def run_pipeline(args: argparse.Namespace) -> dict:
     model_detail, model_summary = simulate_policy(predictions, "model", simulation_config)
     detail = pd.concat([baseline_detail, model_detail], ignore_index=True)
 
-    sku_metrics = build_sku_metrics(predictions, detail)
+    sku_metrics = build_sku_metrics(predictions, detail, args.service_target)
     frontier = build_frontier(
         forecast_result["predictions"],
         forecast_result["validation_predictions"],
