@@ -11,12 +11,14 @@ Read order:
 5. `harness/tasks/T1-DECISION-PIPELINE-MVP/IMPLEMENTATION_PLAN.md`
 6. `harness/tasks/T1-DECISION-PIPELINE-MVP/IMPLEMENTATION_REPORT.md`
 7. `harness/tasks/T1-DECISION-PIPELINE-MVP/EVALUATION_REPORT.md`
+8. `harness/tasks/T2-SENSITIVITY-ROBUSTNESS/IMPLEMENTATION_REPORT.md`
+9. `harness/tasks/T2-SENSITIVITY-ROBUSTNESS/EVALUATION_REPORT.md`
 
 Current task:
 
-- `T1-DECISION-PIPELINE-MVP-PASS`
+- `T2-SENSITIVITY-ROBUSTNESS-PASS`
 
 Public status:
 
-- local implementation allowed;
+- GitHub repo published;
 - public HTML evidence page blocked until human layout approval.

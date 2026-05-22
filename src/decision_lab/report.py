@@ -6,6 +6,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from .sensitivity import plot_sensitivity_grid
+
 
 def write_report(
     report_dir: Path,
@@ -14,6 +16,8 @@ def write_report(
     sku_metrics: pd.DataFrame,
     service_target: float,
     frontier: pd.DataFrame | None = None,
+    sensitivity_grid: pd.DataFrame | None = None,
+    sensitivity_summary: dict | None = None,
 ) -> dict:
     report_dir.mkdir(parents=True, exist_ok=True)
     (report_dir / "figures").mkdir(exist_ok=True)
@@ -46,6 +50,7 @@ def write_report(
             "decision_gate": "pass" if recommended_policy == "model" else "warn",
             "recommended_policy": recommended_policy,
         },
+        "sensitivity": sensitivity_summary or {},
     }
 
     with (report_dir / "decision_report.json").open("w") as file:
@@ -60,6 +65,9 @@ def write_report(
     if frontier is not None:
         frontier.to_csv(report_dir / "service_frontier.csv", index=False)
         plot_service_frontier(report_dir / "figures" / "service_frontier.png", frontier)
+    if sensitivity_grid is not None:
+        sensitivity_grid.to_csv(report_dir / "sensitivity_grid.csv", index=False)
+        plot_sensitivity_grid(report_dir / "figures" / "sensitivity_grid.png", sensitivity_grid)
     return payload
 
 

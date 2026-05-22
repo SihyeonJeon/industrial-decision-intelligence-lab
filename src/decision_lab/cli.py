@@ -15,6 +15,7 @@ from .features import (
 from .forecast import ForecastConfig, run_forecasts
 from .optimize import PolicyConfig, add_base_stock_levels
 from .report import build_sku_metrics, write_report
+from .sensitivity import build_sensitivity_grid, parse_float_list, summarize_sensitivity
 from .simulate import SimulationConfig, simulate_policy
 
 
@@ -37,6 +38,8 @@ def main() -> None:
     run.add_argument("--holding-cost", type=float, default=0.04)
     run.add_argument("--stockout-cost", type=float, default=4.0)
     run.add_argument("--frontier-quantiles", default="0.84,0.90,0.95,0.99")
+    run.add_argument("--sensitivity-holding-costs", default="0.02,0.04,0.08")
+    run.add_argument("--sensitivity-stockout-costs", default="2.0,4.0,8.0")
     run.add_argument("--synthetic", action="store_true")
 
     args = parser.parse_args()
@@ -104,6 +107,15 @@ def run_pipeline(args: argparse.Namespace) -> dict:
         parse_quantiles(args.frontier_quantiles),
         args.lead_time_days,
     )
+    sensitivity_grid = build_sensitivity_grid(
+        forecast_result["predictions"],
+        forecast_result["validation_predictions"],
+        parse_quantiles(args.frontier_quantiles),
+        parse_float_list(args.sensitivity_holding_costs, "sensitivity holding costs"),
+        parse_float_list(args.sensitivity_stockout_costs, "sensitivity stockout costs"),
+        args.lead_time_days,
+        args.service_target,
+    )
     return write_report(
         args.report_dir,
         forecast_result["metrics"],
@@ -111,6 +123,8 @@ def run_pipeline(args: argparse.Namespace) -> dict:
         sku_metrics,
         args.service_target,
         frontier,
+        sensitivity_grid,
+        summarize_sensitivity(sensitivity_grid),
     )
 
 

@@ -27,12 +27,14 @@ Outputs:
 - `reports/decision_report.json`
 - `reports/sku_metrics.csv`
 - `reports/service_frontier.csv`
+- `reports/sensitivity_grid.csv`
 - `reports/figures/policy_comparison.png`
 - `reports/figures/service_frontier.png`
+- `reports/figures/sensitivity_grid.png`
 
 ## Result View
 
-![Cost-service frontier](reports/figures/service_frontier.png)
+![Decision sensitivity](reports/figures/sensitivity_grid.png)
 
 ## Current Result
 
@@ -43,7 +45,9 @@ UCI Online Retail II, top 12 SKUs, final 60-day simulation:
 - service level: `0.928` vs baseline `0.957`
 - service floor: `0.900`
 - decision gate: `pass`
-- frontier: model policy stays below baseline cost across tested service
-  quantiles while exposing stockout/service trade-off
+- sensitivity: `9 / 36` tested cost-service scenarios pass
 
-This is a dataset simulation, not production inventory advice.
+q=`0.99` is the reliable region in the current grid. Lower service settings
+save inventory but miss the service floor.
+
+Dataset simulation only. Not production inventory advice.

@@ -51,5 +51,16 @@
     "cost_improved": true,
     "decision_gate": "pass",
     "recommended_policy": "model"
+  },
+  "sensitivity": {
+    "scenario_count": 36,
+    "pass_count": 9,
+    "pass_rate": 0.25,
+    "median_cost_delta_pct": 0.47890616004927944,
+    "min_cost_delta_pct": -0.07341699147623702,
+    "max_cost_delta_pct": 0.7117889990420658,
+    "median_model_service": 0.8272164971578613,
+    "min_model_service": 0.7903671992443656,
+    "model_policy_count": 9
   }
 }

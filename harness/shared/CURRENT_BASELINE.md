@@ -4,7 +4,7 @@ date: 2026-05-23
 
 project: industrial-decision-intelligence-lab
 
-status: local MVP complete, public release blocked
+status: repo published, sensitivity layer complete
 
 ## Dataset
 
@@ -62,6 +62,33 @@ Reading:
 - model policy accepts higher stockout units than baseline;
 - q=0.99 is the current recommended setting because it passes the 0.90 service
   floor with the largest observed cost reduction in this grid.
+
+## Sensitivity Result
+
+Generated:
+
+- `reports/sensitivity_grid.csv`
+- `reports/figures/sensitivity_grid.png`
+
+Grid:
+
+- service quantiles: 0.84, 0.90, 0.95, 0.99
+- holding costs: 0.02, 0.04, 0.08
+- stockout costs: 2.0, 4.0, 8.0
+- scenarios: 36
+- pass: 9
+- pass rate: 0.25
+- median cost delta pct: 0.47890616004927944
+- min cost delta pct: -0.07341699147623702
+- max cost delta pct: 0.7117889990420658
+- median model service: 0.8272164971578613
+
+Reading:
+
+- the model policy is not universally acceptable across the grid;
+- q=0.99 is the only tested service region that passes the 0.90 floor;
+- lower service quantiles reduce inventory but fail the current service gate;
+- sensitivity output should be shown before any stronger public claim.
 
 ## Boundary
 

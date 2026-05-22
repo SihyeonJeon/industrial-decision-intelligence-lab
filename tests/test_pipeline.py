@@ -4,6 +4,8 @@ import argparse
 import json
 from pathlib import Path
 
+import pandas as pd
+
 from decision_lab.cli import run_pipeline
 
 
@@ -21,6 +23,8 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
         holding_cost=0.04,
         stockout_cost=4.0,
         frontier_quantiles="0.84,0.99",
+        sensitivity_holding_costs="0.02,0.04",
+        sensitivity_stockout_costs="2.0,4.0",
         synthetic=True,
     )
 
@@ -31,8 +35,33 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
     assert (tmp_path / "decision_report.json").exists()
     assert (tmp_path / "sku_metrics.csv").exists()
     assert (tmp_path / "service_frontier.csv").exists()
+    assert (tmp_path / "sensitivity_grid.csv").exists()
     assert (tmp_path / "figures" / "policy_comparison.png").exists()
     assert (tmp_path / "figures" / "service_frontier.png").exists()
+    assert (tmp_path / "figures" / "sensitivity_grid.png").exists()
 
     saved = json.loads((tmp_path / "decision_report.json").read_text())
     assert saved["scope_note"].startswith("UCI Online Retail II simulation")
+    assert saved["sensitivity"]["scenario_count"] == 8
+    assert saved["sensitivity"]["pass_count"] <= saved["sensitivity"]["scenario_count"]
+    assert saved["sensitivity"]["pass_rate"] == (
+        saved["sensitivity"]["pass_count"] / saved["sensitivity"]["scenario_count"]
+    )
+
+    sensitivity = pd.read_csv(tmp_path / "sensitivity_grid.csv")
+    required_columns = {
+        "service_quantile",
+        "holding_cost",
+        "stockout_cost",
+        "cost_delta_pct",
+        "service_floor_met",
+        "cost_improved",
+        "decision_gate",
+        "recommended_policy",
+    }
+    assert required_columns.issubset(sensitivity.columns)
+
+    passed = sensitivity[sensitivity["decision_gate"] == "pass"]
+    assert (passed["service_floor_met"]).all()
+    assert (passed["cost_improved"]).all()
+    assert (sensitivity[sensitivity["recommended_policy"] == "model"]["decision_gate"] == "pass").all()
