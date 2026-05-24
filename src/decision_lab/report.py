@@ -6,7 +6,9 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from .optimize import select_frontier_policy
 from .sensitivity import plot_sensitivity_grid
+from .uncertainty import plot_lead_time_grid
 
 
 def write_report(
@@ -18,6 +20,8 @@ def write_report(
     frontier: pd.DataFrame | None = None,
     sensitivity_grid: pd.DataFrame | None = None,
     sensitivity_summary: dict | None = None,
+    lead_time_grid: pd.DataFrame | None = None,
+    lead_time_summary: dict | None = None,
 ) -> dict:
     report_dir.mkdir(parents=True, exist_ok=True)
     (report_dir / "figures").mkdir(exist_ok=True)
@@ -50,7 +54,11 @@ def write_report(
             "decision_gate": "pass" if recommended_policy == "model" else "warn",
             "recommended_policy": recommended_policy,
         },
+        "frontier_selection": select_frontier_policy(frontier, service_target)
+        if frontier is not None
+        else {},
         "sensitivity": sensitivity_summary or {},
+        "lead_time_uncertainty": lead_time_summary or {},
         "sku_diagnostics": summarize_sku_metrics(sku_metrics),
     }
 
@@ -70,6 +78,9 @@ def write_report(
     if sensitivity_grid is not None:
         sensitivity_grid.to_csv(report_dir / "sensitivity_grid.csv", index=False)
         plot_sensitivity_grid(report_dir / "figures" / "sensitivity_grid.png", sensitivity_grid)
+    if lead_time_grid is not None:
+        lead_time_grid.to_csv(report_dir / "lead_time_grid.csv", index=False)
+        plot_lead_time_grid(report_dir / "figures" / "lead_time_grid.png", lead_time_grid)
     return payload
 
 

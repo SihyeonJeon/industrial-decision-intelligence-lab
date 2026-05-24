@@ -25,6 +25,7 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
         frontier_quantiles="0.84,0.99",
         sensitivity_holding_costs="0.02,0.04",
         sensitivity_stockout_costs="2.0,4.0",
+        uncertainty_lead_times="3,5",
         synthetic=True,
     )
 
@@ -36,9 +37,11 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
     assert (tmp_path / "sku_metrics.csv").exists()
     assert (tmp_path / "service_frontier.csv").exists()
     assert (tmp_path / "sensitivity_grid.csv").exists()
+    assert (tmp_path / "lead_time_grid.csv").exists()
     assert (tmp_path / "figures" / "policy_comparison.png").exists()
     assert (tmp_path / "figures" / "service_frontier.png").exists()
     assert (tmp_path / "figures" / "sensitivity_grid.png").exists()
+    assert (tmp_path / "figures" / "lead_time_grid.png").exists()
     assert (tmp_path / "figures" / "sku_tradeoffs.png").exists()
 
     saved = json.loads((tmp_path / "decision_report.json").read_text())
@@ -48,6 +51,9 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
     assert saved["sensitivity"]["pass_rate"] == (
         saved["sensitivity"]["pass_count"] / saved["sensitivity"]["scenario_count"]
     )
+    assert saved["frontier_selection"]["recommended_policy"] in {"baseline", "model"}
+    assert saved["lead_time_uncertainty"]["scenario_count"] == 4
+    assert saved["lead_time_uncertainty"]["pass_count"] <= saved["lead_time_uncertainty"]["scenario_count"]
     assert saved["sku_diagnostics"]["sku_count"] == 4
     assert saved["sku_diagnostics"]["cost_improved_count"] <= 4
     assert saved["sku_diagnostics"]["service_floor_met_count"] <= 4
@@ -69,6 +75,17 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
     assert (passed["service_floor_met"]).all()
     assert (passed["cost_improved"]).all()
     assert (sensitivity[sensitivity["recommended_policy"] == "model"]["decision_gate"] == "pass").all()
+
+    lead_time = pd.read_csv(tmp_path / "lead_time_grid.csv")
+    lead_time_columns = {
+        "lead_time_days",
+        "service_quantile",
+        "cost_delta_pct",
+        "service_floor_met",
+        "decision_gate",
+        "recommended_policy",
+    }
+    assert lead_time_columns.issubset(lead_time.columns)
 
     sku_metrics = pd.read_csv(tmp_path / "sku_metrics.csv")
     sku_columns = {

@@ -28,9 +28,11 @@ Outputs:
 - `reports/sku_metrics.csv`
 - `reports/service_frontier.csv`
 - `reports/sensitivity_grid.csv`
+- `reports/lead_time_grid.csv`
 - `reports/figures/policy_comparison.png`
 - `reports/figures/service_frontier.png`
 - `reports/figures/sensitivity_grid.png`
+- `reports/figures/lead_time_grid.png`
 - `reports/figures/sku_tradeoffs.png`
 
 ## Result View
@@ -47,9 +49,13 @@ UCI Online Retail II, top 12 SKUs, final 60-day simulation:
 - service floor: `0.900`
 - decision gate: `pass`
 - sensitivity: `9 / 36` tested cost-service scenarios pass
+- lead-time uncertainty: `4 / 16` scenarios pass
+- frontier selection: baseline q=`0.95`, model q=`0.99`
 - SKU diagnostics: `11 / 12` model policies meet the service floor
 
 q=`0.99` is the reliable region in the current grid. Lower service settings
-save inventory but miss the service floor.
+save inventory but miss the service floor. Under lead-time values from 5 to 14
+days, q=`0.99` is the only tested model setting that keeps the service floor in
+every lead-time scenario.
 
 Dataset simulation only. Not production inventory advice.

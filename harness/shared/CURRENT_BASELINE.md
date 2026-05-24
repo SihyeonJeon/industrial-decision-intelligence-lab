@@ -5,6 +5,7 @@ date: 2026-05-23
 project: industrial-decision-intelligence-lab
 
 status: repo published, SKU diagnostics complete
+current task: frontier selection and lead-time uncertainty complete
 
 ## Dataset
 
@@ -60,8 +61,11 @@ Reading:
 - model policy has lower simulated cost across tested quantiles;
 - model policy carries less inventory;
 - model policy accepts higher stockout units than baseline;
-- q=0.99 is the current recommended setting because it passes the 0.90 service
-  floor with the largest observed cost reduction in this grid.
+- frontier selection compares only feasible rows under the 0.90 service floor;
+- selected baseline row: q=0.95, cost 165926.723784107, service 0.912916871569834;
+- selected model row: q=0.99, cost 77323.91024636828, service 0.9279571997216095;
+- q=0.99 is the selected model setting because lower tested model quantiles
+  miss the service floor.
 
 ## Sensitivity Result
 
@@ -89,6 +93,33 @@ Reading:
 - q=0.99 is the only tested service region that passes the 0.90 floor;
 - lower service quantiles reduce inventory but fail the current service gate;
 - sensitivity output should be shown before any stronger public claim.
+
+## Lead-time Uncertainty
+
+Generated:
+
+- `reports/lead_time_grid.csv`
+- `reports/figures/lead_time_grid.png`
+
+Grid:
+
+- service quantiles: 0.84, 0.90, 0.95, 0.99
+- lead times: 5, 7, 10, 14 days
+- scenarios: 16
+- pass: 4
+- pass rate: 0.25
+- worst model service: 0.7547105958001876
+- robust service quantile: 0.99
+- robust worst model service: 0.9017956328684755
+
+Reading:
+
+- lead-time uncertainty makes low q settings fail more clearly;
+- q=0.99 is the only tested setting that passes every lead-time scenario;
+- the model policy remains lower-cost than baseline in all tested lead-time
+  rows, but only four rows meet both cost and service gates;
+- this keeps the public claim narrow: dataset simulation under explicit
+  lead-time assumptions.
 
 ## SKU Diagnostics
 

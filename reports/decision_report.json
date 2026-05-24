@@ -52,6 +52,32 @@
     "decision_gate": "pass",
     "recommended_policy": "model"
   },
+  "frontier_selection": {
+    "service_target": 0.9,
+    "baseline": {
+      "service_quantile": 0.95,
+      "total_cost": 165926.723784107,
+      "service_level": 0.912916871569834,
+      "stockout_units": 7417.305464039395,
+      "average_inventory": 4731.163261387133,
+      "service_floor_met": true,
+      "feasible_count": 2
+    },
+    "model": {
+      "service_quantile": 0.99,
+      "total_cost": 77323.91024636828,
+      "service_level": 0.9279571997216095,
+      "stockout_units": 6136.2455137119,
+      "average_inventory": 1832.6016733166905,
+      "service_floor_met": true,
+      "feasible_count": 1
+    },
+    "cost_delta": 88602.81353773871,
+    "cost_delta_pct": 0.5339876031845413,
+    "service_delta": 0.015040328151775473,
+    "decision_gate": "pass",
+    "recommended_policy": "model"
+  },
   "sensitivity": {
     "scenario_count": 36,
     "pass_count": 9,
@@ -62,6 +88,18 @@
     "median_model_service": 0.8272164971578613,
     "min_model_service": 0.7903671992443656,
     "model_policy_count": 9
+  },
+  "lead_time_uncertainty": {
+    "scenario_count": 16,
+    "pass_count": 4,
+    "pass_rate": 0.25,
+    "lead_time_min": 5,
+    "lead_time_max": 14,
+    "worst_model_service": 0.7547105958001876,
+    "median_cost_delta_pct": 0.5123660716495737,
+    "robust_service_quantile": 0.99,
+    "robust_mean_model_cost": 92602.36456253967,
+    "robust_worst_model_service": 0.9017956328684755
   },
   "sku_diagnostics": {
     "sku_count": 12,

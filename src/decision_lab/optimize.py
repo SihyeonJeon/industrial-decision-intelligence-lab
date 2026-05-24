@@ -52,3 +52,49 @@ def _base_stock(daily_forecast: float, residual_quantile: float, config: PolicyC
     demand_during_lead = daily_forecast * config.lead_time_days
     safety_stock = residual_quantile * np.sqrt(config.lead_time_days)
     return max(config.min_base_stock, demand_during_lead + safety_stock)
+
+
+def select_frontier_policy(frontier: pd.DataFrame, service_target: float) -> dict[str, object]:
+    selections = {
+        "baseline": _select_policy_rows(frontier, "baseline", service_target),
+        "model": _select_policy_rows(frontier, "model", service_target),
+    }
+    baseline = selections["baseline"]
+    model = selections["model"]
+    baseline_cost = float(baseline["total_cost"])
+    model_cost = float(model["total_cost"])
+    cost_delta = baseline_cost - model_cost
+    model_feasible = bool(model["service_floor_met"])
+    cost_improved = model_cost < baseline_cost
+    recommended_policy = "model" if model_feasible and cost_improved else "baseline"
+    return {
+        "service_target": float(service_target),
+        "baseline": baseline,
+        "model": model,
+        "cost_delta": float(cost_delta),
+        "cost_delta_pct": float(cost_delta / max(baseline_cost, 1.0)),
+        "service_delta": float(model["service_level"] - baseline["service_level"]),
+        "decision_gate": "pass" if recommended_policy == "model" else "warn",
+        "recommended_policy": recommended_policy,
+    }
+
+
+def _select_policy_rows(frontier: pd.DataFrame, policy: str, service_target: float) -> dict[str, object]:
+    rows = frontier[frontier["policy"] == policy].copy()
+    if rows.empty:
+        raise ValueError(f"frontier has no rows for policy: {policy}")
+    rows["service_floor_met"] = rows["service_level"] >= service_target
+    feasible = rows[rows["service_floor_met"]]
+    if feasible.empty:
+        selected = rows.sort_values(["service_level", "total_cost"], ascending=[False, True]).iloc[0]
+    else:
+        selected = feasible.sort_values(["total_cost", "service_level"], ascending=[True, False]).iloc[0]
+    return {
+        "service_quantile": float(selected["service_quantile"]),
+        "total_cost": float(selected["total_cost"]),
+        "service_level": float(selected["service_level"]),
+        "stockout_units": float(selected["stockout_units"]),
+        "average_inventory": float(selected["average_inventory"]),
+        "service_floor_met": bool(selected["service_floor_met"]),
+        "feasible_count": int(rows["service_floor_met"].sum()),
+    }

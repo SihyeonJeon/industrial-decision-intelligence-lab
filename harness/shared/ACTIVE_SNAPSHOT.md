@@ -21,6 +21,8 @@ evaluation_contract:
 - compare seasonal naive demand forecast against model-informed forecast
 - convert both forecasts into base-stock decisions
 - simulate inventory under lead time
+- select the lowest-cost feasible frontier row under the service floor
+- test lead-time uncertainty across candidate service quantiles
 - primary metric: total simulated cost
 - secondary metrics: service level, stockout units, holding units, forecast WAPE
 
