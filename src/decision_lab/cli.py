@@ -29,7 +29,7 @@ def main() -> None:
     run = subparsers.add_parser("run", help="Run forecast-to-inventory simulation")
     run.add_argument("--raw-file", type=Path, default=DEFAULT_XLSX)
     run.add_argument("--report-dir", type=Path, default=Path("reports"))
-    run.add_argument("--top-skus", type=int, default=12)
+    run.add_argument("--top-skus", type=int, default=50)
     run.add_argument("--min-days", type=int, default=180)
     run.add_argument("--validation-days", type=int, default=45)
     run.add_argument("--test-days", type=int, default=60)

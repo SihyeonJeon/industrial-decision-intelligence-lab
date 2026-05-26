@@ -25,6 +25,7 @@ def test_summarize_lead_time_grid_selects_robust_quantile() -> None:
                 "model_cost": 50.0,
                 "model_service_level": 0.91,
                 "cost_delta_pct": 0.20,
+                "gate": "allow",
                 "decision_gate": "pass",
             },
             {
@@ -33,6 +34,7 @@ def test_summarize_lead_time_grid_selects_robust_quantile() -> None:
                 "model_cost": 70.0,
                 "model_service_level": 0.89,
                 "cost_delta_pct": 0.10,
+                "gate": "block",
                 "decision_gate": "warn",
             },
             {
@@ -41,6 +43,7 @@ def test_summarize_lead_time_grid_selects_robust_quantile() -> None:
                 "model_cost": 80.0,
                 "model_service_level": 0.94,
                 "cost_delta_pct": 0.30,
+                "gate": "allow",
                 "decision_gate": "pass",
             },
             {
@@ -49,6 +52,7 @@ def test_summarize_lead_time_grid_selects_robust_quantile() -> None:
                 "model_cost": 100.0,
                 "model_service_level": 0.92,
                 "cost_delta_pct": 0.25,
+                "gate": "allow",
                 "decision_gate": "pass",
             },
         ]

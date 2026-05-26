@@ -48,6 +48,8 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
     saved = json.loads((tmp_path / "decision_report.json").read_text())
     assert saved["project"] == "replenishment-policy-gate"
     assert saved["gate_contract"]["decision_unit"] == "SKU-day base-stock replenishment policy"
+    assert saved["gate_contract"]["gate_states"] == ["allow", "review", "block"]
+    assert saved["gate_summary"]["lead_time_counts"]["allow"] <= saved["lead_time_uncertainty"]["scenario_count"]
     assert saved["failure_modes"]
     assert {row["code"] for row in saved["failure_modes"]}.issuperset(
         {
@@ -81,6 +83,7 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
         "service_floor_met",
         "cost_improved",
         "decision_gate",
+        "gate",
         "recommended_policy",
     }
     assert required_columns.issubset(sensitivity.columns)
@@ -100,6 +103,7 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
         "recommended_policy",
     }
     assert lead_time_columns.issubset(lead_time.columns)
+    assert set(lead_time["gate"]).issubset({"allow", "review", "block"})
 
     sku_metrics = pd.read_csv(tmp_path / "sku_metrics.csv")
     sku_columns = {

@@ -11,82 +11,111 @@
       "cost_must_improve": true
     },
     "gate_states": [
-      "pass",
-      "warn"
+      "allow",
+      "review",
+      "block"
     ]
+  },
+  "gate_summary": {
+    "gate_states": [
+      "allow",
+      "review",
+      "block"
+    ],
+    "final_gate": "review",
+    "final_action": "allow robust model quantile only with SKU-level overrides",
+    "robust_service_quantile": 0.99,
+    "robust_lead_time_passes": 4,
+    "robust_lead_time_total": 4,
+    "sensitivity_counts": {
+      "allow": 9,
+      "review": 0,
+      "block": 27
+    },
+    "lead_time_counts": {
+      "allow": 4,
+      "review": 0,
+      "block": 12
+    },
+    "sku_counts": {
+      "allow": 47,
+      "review": 1,
+      "block": 2
+    }
   },
   "forecast": {
     "split": {
-      "train_rows": 7812,
-      "validation_rows": 540,
-      "test_rows": 720,
+      "train_rows": 32550,
+      "validation_rows": 2250,
+      "test_rows": 3000,
       "test_start": "2011-10-11",
       "test_end": "2011-12-09"
     },
     "baseline": {
-      "mae": 126.7,
-      "wape": 1.071018491341356,
-      "bias": -0.004931024361608453
+      "mae": 69.55633333333333,
+      "wape": 1.0695160579377365,
+      "bias": -0.022526216518200363
     },
     "model": {
-      "mae": 101.89877547762775,
-      "wape": 0.8613691616541471,
-      "bias": 0.09416660213477938
+      "mae": 56.22768635198951,
+      "wape": 0.864571356370222,
+      "bias": 0.04506435048759578
     }
   },
   "decision": {
     "baseline": {
-      "total_cost": 174450.85081518182,
-      "service_level": 0.957026080335884,
-      "stockout_units": 3660.303607391067,
-      "holding_units": 3995240.9096404393,
-      "average_inventory": 5548.945707833944,
-      "order_units": 149269.69639260892,
-      "sku_count": 12,
+      "total_cost": 372195.67631912057,
+      "service_level": 0.9797030672794809,
+      "stockout_units": 3960.053355369582,
+      "holding_units": 8908886.572441056,
+      "average_inventory": 2969.628857480352,
+      "order_units": 312629.9466446304,
+      "sku_count": 50,
       "days": 60
     },
     "model": {
-      "total_cost": 77323.91024636828,
-      "service_level": 0.9279571997216095,
-      "stockout_units": 6136.2455137119,
-      "holding_units": 1319473.204788017,
-      "average_inventory": 1832.6016733166905,
-      "order_units": 82861.4254268247,
-      "sku_count": 12,
+      "total_cost": 158345.67904811708,
+      "service_level": 0.9695104340865367,
+      "stockout_units": 5948.697247112166,
+      "holding_units": 3363772.2514917096,
+      "average_inventory": 1121.2574171639033,
+      "order_units": 203007.8246888809,
+      "sku_count": 50,
       "days": 60
     },
-    "cost_delta": 97126.94056881354,
-    "cost_delta_pct": 0.5567581935826302,
+    "cost_delta": 213849.9972710035,
+    "cost_delta_pct": 0.5745633570650308,
     "service_target": 0.9,
-    "service_delta": -0.029068880614274484,
+    "service_delta": -0.010192633192944167,
     "service_floor_met": true,
     "cost_improved": true,
+    "gate": "allow",
     "decision_gate": "pass",
     "recommended_policy": "model"
   },
   "frontier_selection": {
     "service_target": 0.9,
     "baseline": {
-      "service_quantile": 0.95,
-      "total_cost": 165926.723784107,
-      "service_level": 0.912916871569834,
-      "stockout_units": 7417.305464039395,
-      "average_inventory": 4731.163261387133,
+      "service_quantile": 0.9,
+      "total_cost": 319383.6141379989,
+      "service_level": 0.9359854372410233,
+      "stockout_units": 12489.625281652887,
+      "average_inventory": 2245.2092750948946,
       "service_floor_met": true,
-      "feasible_count": 2
+      "feasible_count": 4
     },
     "model": {
       "service_quantile": 0.99,
-      "total_cost": 77323.91024636828,
-      "service_level": 0.9279571997216095,
-      "stockout_units": 6136.2455137119,
-      "average_inventory": 1832.6016733166905,
+      "total_cost": 158345.67904811708,
+      "service_level": 0.9695104340865367,
+      "stockout_units": 5948.697247112166,
+      "average_inventory": 1121.2574171639033,
       "service_floor_met": true,
       "feasible_count": 1
     },
-    "cost_delta": 88602.81353773871,
-    "cost_delta_pct": 0.5339876031845413,
-    "service_delta": 0.015040328151775473,
+    "cost_delta": 161037.93508988182,
+    "cost_delta_pct": 0.5042147685770152,
+    "service_delta": 0.033524996845513355,
     "decision_gate": "pass",
     "recommended_policy": "model"
   },
@@ -94,70 +123,76 @@
     "scenario_count": 36,
     "pass_count": 9,
     "pass_rate": 0.25,
-    "median_cost_delta_pct": 0.47890616004927944,
-    "min_cost_delta_pct": -0.07341699147623702,
-    "max_cost_delta_pct": 0.7117889990420658,
-    "median_model_service": 0.8272164971578613,
-    "min_model_service": 0.7903671992443656,
+    "allow_count": 9,
+    "review_count": 0,
+    "block_count": 27,
+    "median_cost_delta_pct": 0.5153738430293907,
+    "min_cost_delta_pct": -0.24417142802435973,
+    "max_cost_delta_pct": 0.7122244141421157,
+    "median_model_service": 0.8620950308698803,
+    "min_model_service": 0.814456410853032,
     "model_policy_count": 9
   },
   "lead_time_uncertainty": {
     "scenario_count": 16,
     "pass_count": 4,
     "pass_rate": 0.25,
+    "allow_count": 4,
+    "review_count": 0,
+    "block_count": 12,
     "lead_time_min": 5,
     "lead_time_max": 14,
-    "worst_model_service": 0.7547105958001876,
-    "median_cost_delta_pct": 0.5123660716495737,
+    "worst_model_service": 0.773138069691742,
+    "median_cost_delta_pct": 0.5128326671789623,
     "robust_service_quantile": 0.99,
-    "robust_mean_model_cost": 92602.36456253967,
-    "robust_worst_model_service": 0.9017956328684755
+    "robust_mean_model_cost": 194692.72646262488,
+    "robust_worst_model_service": 0.9444621255947858
   },
   "sku_diagnostics": {
-    "sku_count": 12,
-    "cost_improved_count": 12,
-    "service_floor_met_count": 11,
-    "service_risk_count": 1,
-    "wape_worse_count": 3,
-    "largest_service_loss_sku": "22197",
-    "largest_service_loss": -0.06444627589031715,
+    "sku_count": 50,
+    "cost_improved_count": 49,
+    "service_floor_met_count": 48,
+    "service_risk_count": 2,
+    "wape_worse_count": 11,
+    "largest_service_loss_sku": "85123A",
+    "largest_service_loss": -0.08208311458335715,
     "largest_cost_saving_sku": "84077",
-    "largest_cost_saving": 35362.63076115469
+    "largest_cost_saving": 34757.843993297385
   },
   "failure_modes": [
     {
       "code": "LOW_Q_STOCKOUT",
-      "gate": "warn",
+      "gate": "block",
       "trigger": "model policy service level below service floor on frontier rows",
       "evidence": "3 / 4 model frontier rows below 0.90",
-      "action": "raise service quantile or keep baseline policy"
+      "action": "block low-service quantiles; allow only feasible model quantiles"
     },
     {
       "code": "LEAD_TIME_FRAGILITY",
-      "gate": "warn",
+      "gate": "block",
       "trigger": "cost improves but service floor does not survive lead-time grid",
-      "evidence": "12 / 16 lead-time scenarios require baseline or review",
-      "action": "check lead-time calibration before using the model policy"
+      "evidence": "12 / 16 lead-time scenarios blocked; robust q=0.99 passes 4 / 4",
+      "action": "block fragile lead-time/quantile pairs; use robust quantile or baseline"
     },
     {
       "code": "COST_WEIGHT_SENSITIVITY",
-      "gate": "warn",
+      "gate": "block",
       "trigger": "policy choice changes under holding and stockout cost assumptions",
-      "evidence": "27 / 36 cost scenarios require baseline or review",
-      "action": "treat cost weights as a deployment parameter, not a constant"
+      "evidence": "27 block, 0 review, 9 allow",
+      "action": "block service-floor misses; review cost-assumption-only failures"
     },
     {
       "code": "SKU_SERVICE_FLOOR_BREACH",
-      "gate": "warn",
+      "gate": "block",
       "trigger": "aggregate policy passes while one or more SKUs miss service floor",
-      "evidence": "1 / 12 SKUs below floor; worst=22197 service_delta=-0.064",
-      "action": "route flagged SKU rows to SKU-level override review"
+      "evidence": "2 / 50 SKUs below floor; worst=85123A service_delta=-0.082",
+      "action": "block model policy for flagged SKUs; route to baseline or override review"
     },
     {
       "code": "FORECAST_METRIC_MISMATCH",
-      "gate": "warn",
+      "gate": "review",
       "trigger": "forecast improvement or cost reduction does not imply SKU-level service safety",
-      "evidence": "1 service-risk SKUs after forecast-to-policy simulation",
+      "evidence": "2 service-risk SKUs after forecast-to-policy simulation",
       "action": "evaluate the operational decision, not forecast error alone"
     }
   ]

@@ -8,6 +8,7 @@ import pandas as pd
 
 from .optimize import PolicyConfig, add_base_stock_levels
 from .simulate import SimulationConfig, simulate_policy
+from .gate import classify_policy_gate, recommended_policy_for_gate
 
 
 def parse_int_list(raw: str, name: str) -> list[int]:
@@ -50,7 +51,8 @@ def build_lead_time_grid(
             cost_delta = baseline["total_cost"] - model["total_cost"]
             service_floor_met = model["service_level"] >= service_target
             cost_improved = model["total_cost"] < baseline["total_cost"]
-            recommended_policy = "model" if service_floor_met and cost_improved else "baseline"
+            gate = classify_policy_gate(service_floor_met, cost_improved)
+            recommended_policy = recommended_policy_for_gate(gate)
             rows.append(
                 {
                     "lead_time_days": int(lead_time),
@@ -66,7 +68,8 @@ def build_lead_time_grid(
                     "model_average_inventory": model["average_inventory"],
                     "service_floor_met": service_floor_met,
                     "cost_improved": cost_improved,
-                    "decision_gate": "pass" if recommended_policy == "model" else "warn",
+                    "gate": gate,
+                    "decision_gate": "pass" if gate == "allow" else "warn",
                     "recommended_policy": recommended_policy,
                 }
             )
@@ -76,11 +79,15 @@ def build_lead_time_grid(
 def summarize_lead_time_grid(grid: pd.DataFrame) -> dict[str, float | int | None]:
     total = max(len(grid), 1)
     passes = int((grid["decision_gate"] == "pass").sum())
+    gate_counts = grid["gate"].value_counts().to_dict() if "gate" in grid.columns else {}
     robust = _select_robust_quantile(grid)
     return {
         "scenario_count": int(len(grid)),
         "pass_count": passes,
         "pass_rate": float(passes / total),
+        "allow_count": int(gate_counts.get("allow", 0)),
+        "review_count": int(gate_counts.get("review", 0)),
+        "block_count": int(gate_counts.get("block", 0)),
         "lead_time_min": int(grid["lead_time_days"].min()),
         "lead_time_max": int(grid["lead_time_days"].max()),
         "worst_model_service": float(grid["model_service_level"].min()),
@@ -93,8 +100,9 @@ def summarize_lead_time_grid(grid: pd.DataFrame) -> dict[str, float | int | None
 
 def plot_lead_time_grid(path: Path, grid: pd.DataFrame) -> None:
     fig, axis = plt.subplots(figsize=(7.0, 4.6), layout="constrained")
-    passed = grid["decision_gate"] == "pass"
-    failed = ~passed
+    passed = grid["gate"] == "allow" if "gate" in grid.columns else grid["decision_gate"] == "pass"
+    blocked = grid["gate"] == "block" if "gate" in grid.columns else ~passed
+    review = ~(passed | blocked)
     vmin = float(grid["cost_delta_pct"].min())
     vmax = float(grid["cost_delta_pct"].max())
     scatter = axis.scatter(
@@ -110,12 +118,20 @@ def plot_lead_time_grid(path: Path, grid: pd.DataFrame) -> None:
         label="pass",
     )
     axis.scatter(
-        grid.loc[failed, "lead_time_days"],
-        grid.loc[failed, "service_quantile"],
+        grid.loc[blocked, "lead_time_days"],
+        grid.loc[blocked, "service_quantile"],
         marker="x",
         c="#ef4444",
         s=78,
-        label="warn",
+        label="block",
+    )
+    axis.scatter(
+        grid.loc[review, "lead_time_days"],
+        grid.loc[review, "service_quantile"],
+        marker="^",
+        c="#f59e0b",
+        s=72,
+        label="review",
     )
     axis.set_xlabel("lead time days")
     axis.set_ylabel("service quantile")
@@ -131,7 +147,9 @@ def plot_lead_time_grid(path: Path, grid: pd.DataFrame) -> None:
 def _select_robust_quantile(grid: pd.DataFrame) -> dict[str, float | None]:
     candidates = []
     for service_quantile, rows in grid.groupby("service_quantile"):
-        if bool((rows["decision_gate"] == "pass").all()):
+        gate_col = "gate" if "gate" in rows.columns else "decision_gate"
+        allow_value = "allow" if gate_col == "gate" else "pass"
+        if bool((rows[gate_col] == allow_value).all()):
             candidates.append(
                 {
                     "service_quantile": float(service_quantile),

@@ -24,27 +24,31 @@ and SKU-level failure cases.
 
 ## Current Result
 
-UCI Online Retail II, top 12 SKUs, final 60-day simulation
+UCI Online Retail II, top 50 SKUs, final 60-day simulation
 
 | Check | Result |
 | --- | ---: |
-| model WAPE | 0.861 |
-| seasonal baseline WAPE | 1.071 |
-| model policy cost | 77,323.91 |
-| baseline policy cost | 174,450.85 |
-| service level | 0.928 |
+| model WAPE | 0.865 |
+| seasonal baseline WAPE | 1.070 |
+| model policy cost | 158,345.68 |
+| baseline policy cost | 372,195.68 |
+| model service level | 0.970 |
 | service floor | 0.900 |
-| frontier cost delta | 53.4% lower |
-| sensitivity pass count | 9 / 36 |
-| lead-time pass count | 4 / 16 |
-| SKU service floor pass | 11 / 12 |
+| frontier cost delta | 50.4% lower |
+| final gate | `review` |
+| robust quantile | q=0.99 |
+| robust lead-time pass | 4 / 4 |
+| blocked lead-time settings | 12 / 16 |
+| blocked cost settings | 27 / 36 |
+| SKU service floor pass | 48 / 50 |
 
 The selected model policy passes the current service floor and lowers simulated
-cost on this split. The gate also exposes the weak region:
+cost on this split. The gate does not treat that as a blanket approval:
 
-- model q 0.84, 0.90, and 0.95 miss the service floor
-- 12 / 16 lead-time scenarios require baseline or review
-- 1 / 12 SKUs still carries service-floor risk
+- model q 0.84, 0.90, and 0.95 are blocked under lead-time checks
+- robust q 0.99 passes 4 / 4 lead-time settings
+- 12 / 16 lead-time and 27 / 36 cost settings are blocked
+- 2 / 50 SKUs require baseline or SKU-level override review
 - cost weights remain a deployment parameter, not a constant
 
 Visual case page:
@@ -63,7 +67,7 @@ Run on the default public dataset:
 
 ```bash
 uv run replenishment-gate fetch
-uv run replenishment-gate run --top-skus 12
+uv run replenishment-gate run
 ```
 
 The raw Excel file is not committed. `replenishment-gate fetch` downloads Online

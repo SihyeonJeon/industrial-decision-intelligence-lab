@@ -9,6 +9,7 @@ import pandas as pd
 from .optimize import select_frontier_policy
 from .sensitivity import plot_sensitivity_grid
 from .uncertainty import plot_lead_time_grid
+from .gate import build_gate_summary, classify_policy_gate, recommended_policy_for_gate
 
 
 def write_report(
@@ -34,7 +35,9 @@ def write_report(
     baseline_service = decision_summaries["baseline"]["service_level"]
     service_floor_met = model_service >= service_target
     cost_improved = model_cost < baseline_cost
-    recommended_policy = "model" if cost_improved and service_floor_met else "baseline"
+    global_gate = classify_policy_gate(service_floor_met, cost_improved)
+    recommended_policy = recommended_policy_for_gate(global_gate)
+    gate_summary = build_gate_summary(sensitivity_grid, lead_time_grid, sku_metrics)
 
     payload = {
         "project": "replenishment-policy-gate",
@@ -48,8 +51,9 @@ def write_report(
                 "service_floor": float(service_target),
                 "cost_must_improve": True,
             },
-            "gate_states": ["pass", "warn"],
+            "gate_states": ["allow", "review", "block"],
         },
+        "gate_summary": gate_summary,
         "forecast": forecast_metrics,
         "decision": {
             "baseline": decision_summaries["baseline"],
@@ -60,7 +64,8 @@ def write_report(
             "service_delta": float(model_service - baseline_service),
             "service_floor_met": bool(service_floor_met),
             "cost_improved": bool(cost_improved),
-            "decision_gate": "pass" if recommended_policy == "model" else "warn",
+            "gate": global_gate,
+            "decision_gate": "pass" if global_gate == "allow" else "warn",
             "recommended_policy": recommended_policy,
         },
         "frontier_selection": select_frontier_policy(frontier, service_target)
@@ -118,34 +123,44 @@ def build_failure_modes(
         modes.append(
             {
                 "code": "LOW_Q_STOCKOUT",
-                "gate": "warn" if len(low_service) else "pass",
+                "gate": "block" if len(low_service) else "allow",
                 "trigger": "model policy service level below service floor on frontier rows",
                 "evidence": f"{len(low_service)} / {len(model_frontier)} model frontier rows below {service_target:.2f}",
-                "action": "raise service quantile or keep baseline policy",
+                "action": "block low-service quantiles; allow only feasible model quantiles",
             }
         )
 
     if lead_time_grid is not None and not lead_time_grid.empty:
-        warned = lead_time_grid[lead_time_grid["decision_gate"] != "pass"]
+        blocked = lead_time_grid[lead_time_grid["gate"] == "block"]
+        robust = payload["gate_summary"]["robust_service_quantile"]
         modes.append(
             {
                 "code": "LEAD_TIME_FRAGILITY",
-                "gate": "warn" if len(warned) else "pass",
+                "gate": "block" if len(blocked) else "allow",
                 "trigger": "cost improves but service floor does not survive lead-time grid",
-                "evidence": f"{len(warned)} / {len(lead_time_grid)} lead-time scenarios require baseline or review",
-                "action": "check lead-time calibration before using the model policy",
+                "evidence": (
+                    f"{len(blocked)} / {len(lead_time_grid)} lead-time scenarios blocked; "
+                    f"robust q={robust} passes "
+                    f"{payload['gate_summary']['robust_lead_time_passes']} / "
+                    f"{payload['gate_summary']['robust_lead_time_total']}"
+                ),
+                "action": "block fragile lead-time/quantile pairs; use robust quantile or baseline",
             }
         )
 
     if sensitivity_grid is not None and not sensitivity_grid.empty:
-        warned = sensitivity_grid[sensitivity_grid["decision_gate"] != "pass"]
+        blocked = sensitivity_grid[sensitivity_grid["gate"] == "block"]
+        review = sensitivity_grid[sensitivity_grid["gate"] == "review"]
         modes.append(
             {
                 "code": "COST_WEIGHT_SENSITIVITY",
-                "gate": "warn" if len(warned) else "pass",
+                "gate": "block" if len(blocked) else ("review" if len(review) else "allow"),
                 "trigger": "policy choice changes under holding and stockout cost assumptions",
-                "evidence": f"{len(warned)} / {len(sensitivity_grid)} cost scenarios require baseline or review",
-                "action": "treat cost weights as a deployment parameter, not a constant",
+                "evidence": (
+                    f"{len(blocked)} block, {len(review)} review, "
+                    f"{int((sensitivity_grid['gate'] == 'allow').sum())} allow"
+                ),
+                "action": "block service-floor misses; review cost-assumption-only failures",
             }
         )
 
@@ -156,19 +171,19 @@ def build_failure_modes(
         modes.append(
             {
                 "code": "SKU_SERVICE_FLOOR_BREACH",
-                "gate": "warn" if len(floor_miss) else "pass",
+                "gate": "block" if len(floor_miss) else "allow",
                 "trigger": "aggregate policy passes while one or more SKUs miss service floor",
                 "evidence": (
                     f"{len(floor_miss)} / {len(sku_metrics)} SKUs below floor; "
                     f"worst={worst['sku']} service_delta={float(worst['service_delta']):.3f}"
                 ),
-                "action": "route flagged SKU rows to SKU-level override review",
+                "action": "block model policy for flagged SKUs; route to baseline or override review",
             }
         )
         modes.append(
             {
                 "code": "FORECAST_METRIC_MISMATCH",
-                "gate": "warn" if len(risky) else "pass",
+                "gate": "review" if len(risky) else "allow",
                 "trigger": "forecast improvement or cost reduction does not imply SKU-level service safety",
                 "evidence": f"{len(risky)} service-risk SKUs after forecast-to-policy simulation",
                 "action": "evaluate the operational decision, not forecast error alone",

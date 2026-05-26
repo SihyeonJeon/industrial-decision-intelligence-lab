@@ -8,6 +8,7 @@ import pandas as pd
 
 from .optimize import PolicyConfig, add_base_stock_levels
 from .simulate import SimulationConfig, simulate_policy
+from .gate import classify_policy_gate, recommended_policy_for_gate
 
 
 def parse_float_list(raw: str, name: str) -> list[float]:
@@ -55,7 +56,8 @@ def build_sensitivity_grid(
                 cost_delta_pct = cost_delta / max(baseline_cost, 1.0)
                 service_floor_met = model["service_level"] >= service_target
                 cost_improved = model_cost < baseline_cost
-                recommended_policy = "model" if service_floor_met and cost_improved else "baseline"
+                gate = classify_policy_gate(service_floor_met, cost_improved)
+                recommended_policy = recommended_policy_for_gate(gate)
 
                 rows.append(
                     {
@@ -74,7 +76,8 @@ def build_sensitivity_grid(
                         "model_average_inventory": model["average_inventory"],
                         "service_floor_met": service_floor_met,
                         "cost_improved": cost_improved,
-                        "decision_gate": "pass" if recommended_policy == "model" else "warn",
+                        "gate": gate,
+                        "decision_gate": "pass" if gate == "allow" else "warn",
                         "recommended_policy": recommended_policy,
                     }
                 )
@@ -85,10 +88,14 @@ def summarize_sensitivity(grid: pd.DataFrame) -> dict[str, float | int]:
     total = max(len(grid), 1)
     passes = int((grid["decision_gate"] == "pass").sum())
     model_rows = grid[grid["recommended_policy"] == "model"]
+    gate_counts = grid["gate"].value_counts().to_dict() if "gate" in grid.columns else {}
     return {
         "scenario_count": int(len(grid)),
         "pass_count": passes,
         "pass_rate": float(passes / total),
+        "allow_count": int(gate_counts.get("allow", 0)),
+        "review_count": int(gate_counts.get("review", 0)),
+        "block_count": int(gate_counts.get("block", 0)),
         "median_cost_delta_pct": float(grid["cost_delta_pct"].median()),
         "min_cost_delta_pct": float(grid["cost_delta_pct"].min()),
         "max_cost_delta_pct": float(grid["cost_delta_pct"].max()),
@@ -115,8 +122,9 @@ def plot_sensitivity_grid(path: Path, grid: pd.DataFrame) -> None:
     scatter = None
     for axis, holding_cost in zip(axes, holding_costs, strict=True):
         subset = grid[grid["holding_cost"] == holding_cost]
-        passed = subset["decision_gate"] == "pass"
-        failed = ~passed
+        passed = subset["gate"] == "allow" if "gate" in subset.columns else subset["decision_gate"] == "pass"
+        blocked = subset["gate"] == "block" if "gate" in subset.columns else ~passed
+        review = ~(passed | blocked)
 
         scatter = axis.scatter(
             subset.loc[passed, "stockout_cost"],
@@ -131,12 +139,20 @@ def plot_sensitivity_grid(path: Path, grid: pd.DataFrame) -> None:
             label="pass",
         )
         axis.scatter(
-            subset.loc[failed, "stockout_cost"],
-            subset.loc[failed, "service_quantile"],
+            subset.loc[blocked, "stockout_cost"],
+            subset.loc[blocked, "service_quantile"],
             marker="x",
             c="#ef4444",
             s=74,
-            label="warn",
+            label="block",
+        )
+        axis.scatter(
+            subset.loc[review, "stockout_cost"],
+            subset.loc[review, "service_quantile"],
+            marker="^",
+            c="#f59e0b",
+            s=70,
+            label="review",
         )
         axis.set_xscale("log")
         axis.set_xlabel("stockout cost")
