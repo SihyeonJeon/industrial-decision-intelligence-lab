@@ -37,10 +37,19 @@ def write_report(
     recommended_policy = "model" if cost_improved and service_floor_met else "baseline"
 
     payload = {
-        "project": "industrial-decision-intelligence-lab",
+        "project": "replenishment-policy-gate",
         "evidence_grade": "dataset_simulation",
         "claim_allowed": False,
         "scope_note": "UCI Online Retail II simulation, not production inventory advice",
+        "gate_contract": {
+            "decision_unit": "SKU-day base-stock replenishment policy",
+            "candidate_action": "switch from seasonal baseline to model-informed reorder levels",
+            "hard_constraints": {
+                "service_floor": float(service_target),
+                "cost_must_improve": True,
+            },
+            "gate_states": ["pass", "warn"],
+        },
         "forecast": forecast_metrics,
         "decision": {
             "baseline": decision_summaries["baseline"],
@@ -61,11 +70,20 @@ def write_report(
         "lead_time_uncertainty": lead_time_summary or {},
         "sku_diagnostics": summarize_sku_metrics(sku_metrics),
     }
+    payload["failure_modes"] = build_failure_modes(
+        payload,
+        sku_metrics,
+        frontier,
+        sensitivity_grid,
+        lead_time_grid,
+        service_target,
+    )
 
     with (report_dir / "decision_report.json").open("w") as file:
         json.dump(payload, file, indent=2)
 
     sku_metrics.to_csv(report_dir / "sku_metrics.csv", index=False)
+    pd.DataFrame(payload["failure_modes"]).to_csv(report_dir / "failure_modes.csv", index=False)
     plot_sku_tradeoffs(report_dir / "figures" / "sku_tradeoffs.png", sku_metrics, service_target)
     plot_policy_comparison(
         report_dir / "figures" / "policy_comparison.png",
@@ -82,6 +100,97 @@ def write_report(
         lead_time_grid.to_csv(report_dir / "lead_time_grid.csv", index=False)
         plot_lead_time_grid(report_dir / "figures" / "lead_time_grid.png", lead_time_grid)
     return payload
+
+
+def build_failure_modes(
+    payload: dict,
+    sku_metrics: pd.DataFrame,
+    frontier: pd.DataFrame | None,
+    sensitivity_grid: pd.DataFrame | None,
+    lead_time_grid: pd.DataFrame | None,
+    service_target: float,
+) -> list[dict[str, object]]:
+    modes: list[dict[str, object]] = []
+
+    if frontier is not None and not frontier.empty:
+        model_frontier = frontier[frontier["policy"] == "model"].copy()
+        low_service = model_frontier[model_frontier["service_level"] < service_target]
+        modes.append(
+            {
+                "code": "LOW_Q_STOCKOUT",
+                "gate": "warn" if len(low_service) else "pass",
+                "trigger": "model policy service level below service floor on frontier rows",
+                "evidence": f"{len(low_service)} / {len(model_frontier)} model frontier rows below {service_target:.2f}",
+                "action": "raise service quantile or keep baseline policy",
+            }
+        )
+
+    if lead_time_grid is not None and not lead_time_grid.empty:
+        warned = lead_time_grid[lead_time_grid["decision_gate"] != "pass"]
+        modes.append(
+            {
+                "code": "LEAD_TIME_FRAGILITY",
+                "gate": "warn" if len(warned) else "pass",
+                "trigger": "cost improves but service floor does not survive lead-time grid",
+                "evidence": f"{len(warned)} / {len(lead_time_grid)} lead-time scenarios require baseline or review",
+                "action": "check lead-time calibration before using the model policy",
+            }
+        )
+
+    if sensitivity_grid is not None and not sensitivity_grid.empty:
+        warned = sensitivity_grid[sensitivity_grid["decision_gate"] != "pass"]
+        modes.append(
+            {
+                "code": "COST_WEIGHT_SENSITIVITY",
+                "gate": "warn" if len(warned) else "pass",
+                "trigger": "policy choice changes under holding and stockout cost assumptions",
+                "evidence": f"{len(warned)} / {len(sensitivity_grid)} cost scenarios require baseline or review",
+                "action": "treat cost weights as a deployment parameter, not a constant",
+            }
+        )
+
+    if not sku_metrics.empty:
+        risky = sku_metrics[sku_metrics["decision_flag"] == "service_risk"]
+        floor_miss = sku_metrics[~sku_metrics["model_service_floor_met"]]
+        worst = sku_metrics.sort_values("service_delta").iloc[0]
+        modes.append(
+            {
+                "code": "SKU_SERVICE_FLOOR_BREACH",
+                "gate": "warn" if len(floor_miss) else "pass",
+                "trigger": "aggregate policy passes while one or more SKUs miss service floor",
+                "evidence": (
+                    f"{len(floor_miss)} / {len(sku_metrics)} SKUs below floor; "
+                    f"worst={worst['sku']} service_delta={float(worst['service_delta']):.3f}"
+                ),
+                "action": "route flagged SKU rows to SKU-level override review",
+            }
+        )
+        modes.append(
+            {
+                "code": "FORECAST_METRIC_MISMATCH",
+                "gate": "warn" if len(risky) else "pass",
+                "trigger": "forecast improvement or cost reduction does not imply SKU-level service safety",
+                "evidence": f"{len(risky)} service-risk SKUs after forecast-to-policy simulation",
+                "action": "evaluate the operational decision, not forecast error alone",
+            }
+        )
+
+    decision = payload["decision"]
+    if decision["decision_gate"] != "pass":
+        modes.append(
+            {
+                "code": "GLOBAL_DECISION_REJECTED",
+                "gate": "warn",
+                "trigger": "candidate policy fails cost or service gate",
+                "evidence": (
+                    f"cost_improved={decision['cost_improved']} "
+                    f"service_floor_met={decision['service_floor_met']}"
+                ),
+                "action": "keep baseline policy",
+            }
+        )
+
+    return modes
 
 
 def build_sku_metrics(

@@ -5,7 +5,7 @@ Date: 2026-05-25
 Command:
 
 ```bash
-uv run decision-lab run --top-skus 12
+uv run replenishment-gate run --top-skus 12
 uv run pytest
 ```
 

@@ -2,7 +2,7 @@
 
 date: 2026-05-23
 
-project: industrial-decision-intelligence-lab
+project: replenishment-policy-gate
 
 status: repo published, SKU diagnostics complete
 current task: frontier selection and lead-time uncertainty complete
@@ -17,7 +17,7 @@ current task: frontier selection and lead-time uncertainty complete
 ## Run
 
 ```bash
-uv run decision-lab run --top-skus 12 --min-days 180 --validation-days 45 --test-days 60 --lead-time-days 7
+uv run replenishment-gate run --top-skus 12 --min-days 180 --validation-days 45 --test-days 60 --lead-time-days 7
 ```
 
 ## Forecast Result

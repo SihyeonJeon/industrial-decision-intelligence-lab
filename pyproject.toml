@@ -1,7 +1,7 @@
 [project]
-name = "industrial-decision-intelligence-lab"
-version = "0.2.0"
-description = "Forecast-to-inventory decision simulation on retail transaction data"
+name = "replenishment-policy-gate"
+version = "0.3.0"
+description = "Forecast-to-replenishment policy gate on retail transaction data"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -16,10 +16,11 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/SihyeonJeon/industrial-decision-intelligence-lab"
+Repository = "https://github.com/SihyeonJeon/replenishment-policy-gate"
 
 [project.scripts]
 decision-lab = "decision_lab.cli:main"
+replenishment-gate = "decision_lab.cli:main"
 
 [build-system]
 requires = ["hatchling"]

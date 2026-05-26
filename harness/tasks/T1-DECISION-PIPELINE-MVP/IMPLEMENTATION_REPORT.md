@@ -5,6 +5,7 @@ Status: implemented.
 Changed:
 
 - added packaged CLI: `decision-lab`;
+- added public CLI alias: `replenishment-gate`;
 - added UCI Online Retail II fetcher;
 - added transaction cleaning and daily SKU demand aggregation;
 - added lag, rolling, and calendar features;

@@ -1,8 +1,20 @@
 {
-  "project": "industrial-decision-intelligence-lab",
+  "project": "replenishment-policy-gate",
   "evidence_grade": "dataset_simulation",
   "claim_allowed": false,
   "scope_note": "UCI Online Retail II simulation, not production inventory advice",
+  "gate_contract": {
+    "decision_unit": "SKU-day base-stock replenishment policy",
+    "candidate_action": "switch from seasonal baseline to model-informed reorder levels",
+    "hard_constraints": {
+      "service_floor": 0.9,
+      "cost_must_improve": true
+    },
+    "gate_states": [
+      "pass",
+      "warn"
+    ]
+  },
   "forecast": {
     "split": {
       "train_rows": 7812,
@@ -111,5 +123,42 @@
     "largest_service_loss": -0.06444627589031715,
     "largest_cost_saving_sku": "84077",
     "largest_cost_saving": 35362.63076115469
-  }
+  },
+  "failure_modes": [
+    {
+      "code": "LOW_Q_STOCKOUT",
+      "gate": "warn",
+      "trigger": "model policy service level below service floor on frontier rows",
+      "evidence": "3 / 4 model frontier rows below 0.90",
+      "action": "raise service quantile or keep baseline policy"
+    },
+    {
+      "code": "LEAD_TIME_FRAGILITY",
+      "gate": "warn",
+      "trigger": "cost improves but service floor does not survive lead-time grid",
+      "evidence": "12 / 16 lead-time scenarios require baseline or review",
+      "action": "check lead-time calibration before using the model policy"
+    },
+    {
+      "code": "COST_WEIGHT_SENSITIVITY",
+      "gate": "warn",
+      "trigger": "policy choice changes under holding and stockout cost assumptions",
+      "evidence": "27 / 36 cost scenarios require baseline or review",
+      "action": "treat cost weights as a deployment parameter, not a constant"
+    },
+    {
+      "code": "SKU_SERVICE_FLOOR_BREACH",
+      "gate": "warn",
+      "trigger": "aggregate policy passes while one or more SKUs miss service floor",
+      "evidence": "1 / 12 SKUs below floor; worst=22197 service_delta=-0.064",
+      "action": "route flagged SKU rows to SKU-level override review"
+    },
+    {
+      "code": "FORECAST_METRIC_MISMATCH",
+      "gate": "warn",
+      "trigger": "forecast improvement or cost reduction does not imply SKU-level service safety",
+      "evidence": "1 service-risk SKUs after forecast-to-policy simulation",
+      "action": "evaluate the operational decision, not forecast error alone"
+    }
+  ]
 }

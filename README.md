@@ -1,15 +1,13 @@
-# Industrial Decision Intelligence Lab
+# replenishment-policy-gate
 
-[![CI](https://github.com/SihyeonJeon/industrial-decision-intelligence-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/SihyeonJeon/industrial-decision-intelligence-lab/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Forecast-to-inventory simulation on retail transaction data
+Stop lower-cost replenishment policies from hiding stockout risk
 
-Forecast error is not the result. The useful question is whether a forecast
-changes an inventory policy without breaking the service floor. This repo runs
-that full path: demand aggregation, short-horizon forecasting, base-stock
-policy selection, cost/service simulation, sensitivity checks, and SKU-level
-diagnostics.
+Forecast error is not the decision. This repo takes daily SKU demand, compares
+a seasonal baseline with a model forecast, converts both into base-stock reorder
+levels, and gates the candidate policy against service-floor, lead-time, cost,
+and SKU-level failure cases.
 
 ![Service frontier](reports/figures/service_frontier.png)
 
@@ -19,6 +17,7 @@ diagnostics.
 - compares a seasonal baseline against a model-informed forecast
 - chooses base-stock levels under lead-time and service constraints
 - simulates holding cost, stockout cost, service level, and order volume
+- rejects low-service policies that save inventory but miss the service floor
 - tests cost/service sensitivity across 36 scenarios
 - tests lead-time uncertainty across 16 scenarios
 - writes JSON, CSV, and figure outputs for review
@@ -41,30 +40,33 @@ UCI Online Retail II, top 12 SKUs, final 60-day simulation
 | SKU service floor pass | 11 / 12 |
 
 The selected model policy passes the current service floor and lowers simulated
-cost on the dataset split. The robustness checks also expose the weak region:
-lower service quantiles save inventory but miss the service floor, and one SKU
-still carries service risk.
+cost on this split. The gate also exposes the weak region:
+
+- model q 0.84, 0.90, and 0.95 miss the service floor
+- 12 / 16 lead-time scenarios require baseline or review
+- 1 / 12 SKUs still carries service-floor risk
+- cost weights remain a deployment parameter, not a constant
 
 Visual case page:
-<https://sihyeonjeon.github.io/projects/industrial-decision-intelligence-lab/>
+<https://sihyeonjeon.github.io/projects/replenishment-policy-gate/>
 
 ## Quick Start
 
 ```bash
-git clone https://github.com/SihyeonJeon/industrial-decision-intelligence-lab
-cd industrial-decision-intelligence-lab
+git clone https://github.com/SihyeonJeon/replenishment-policy-gate
+cd replenishment-policy-gate
 uv sync
-uv run decision-lab run --synthetic --report-dir /tmp/decision-lab-smoke
+uv run replenishment-gate run --synthetic --report-dir /tmp/replenishment-gate-smoke
 ```
 
 Run on the default public dataset:
 
 ```bash
-uv run decision-lab fetch
-uv run decision-lab run --top-skus 12
+uv run replenishment-gate fetch
+uv run replenishment-gate run --top-skus 12
 ```
 
-The raw Excel file is not committed. `decision-lab fetch` downloads Online
+The raw Excel file is not committed. `replenishment-gate fetch` downloads Online
 Retail II from UCI into `data/raw/`; see [data/README.md](data/README.md).
 
 ## Outputs
@@ -72,6 +74,7 @@ Retail II from UCI into `data/raw/`; see [data/README.md](data/README.md).
 ```text
 reports/
   decision_report.json
+  failure_modes.csv
   sku_metrics.csv
   service_frontier.csv
   sensitivity_grid.csv
@@ -88,6 +91,8 @@ Useful files:
 
 - [decision_report.json](reports/decision_report.json): summary metrics and
   decision gate
+- [failure_modes.csv](reports/failure_modes.csv): named gate failures and
+  actions
 - [sku_metrics.csv](reports/sku_metrics.csv): SKU-level forecast and service
   diagnostics
 - [service_frontier.csv](reports/service_frontier.csv): feasible policy grid

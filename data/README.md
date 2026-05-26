@@ -11,5 +11,5 @@ Default source:
 Fetch locally:
 
 ```bash
-uv run decision-lab fetch
+uv run replenishment-gate fetch
 ```

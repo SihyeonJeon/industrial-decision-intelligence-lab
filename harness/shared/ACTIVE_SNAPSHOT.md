@@ -1,4 +1,4 @@
-project: industrial-decision-intelligence-lab
+project: replenishment-policy-gate
 date: 2026-05-23
 operator_verdict: APPROVE
 implementation_status: APPROVE_FOR_IMPLEMENTATION

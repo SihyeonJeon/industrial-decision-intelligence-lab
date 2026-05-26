@@ -34,6 +34,7 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
     assert payload["decision"]["recommended_policy"] in {"baseline", "model"}
     assert payload["decision"]["decision_gate"] in {"pass", "warn"}
     assert (tmp_path / "decision_report.json").exists()
+    assert (tmp_path / "failure_modes.csv").exists()
     assert (tmp_path / "sku_metrics.csv").exists()
     assert (tmp_path / "service_frontier.csv").exists()
     assert (tmp_path / "sensitivity_grid.csv").exists()
@@ -45,6 +46,17 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
     assert (tmp_path / "figures" / "sku_tradeoffs.png").exists()
 
     saved = json.loads((tmp_path / "decision_report.json").read_text())
+    assert saved["project"] == "replenishment-policy-gate"
+    assert saved["gate_contract"]["decision_unit"] == "SKU-day base-stock replenishment policy"
+    assert saved["failure_modes"]
+    assert {row["code"] for row in saved["failure_modes"]}.issuperset(
+        {
+            "LOW_Q_STOCKOUT",
+            "LEAD_TIME_FRAGILITY",
+            "SKU_SERVICE_FLOOR_BREACH",
+            "FORECAST_METRIC_MISMATCH",
+        }
+    )
     assert saved["scope_note"].startswith("UCI Online Retail II simulation")
     assert saved["sensitivity"]["scenario_count"] == 8
     assert saved["sensitivity"]["pass_count"] <= saved["sensitivity"]["scenario_count"]
@@ -59,6 +71,8 @@ def test_synthetic_pipeline_writes_report(tmp_path: Path) -> None:
     assert saved["sku_diagnostics"]["service_floor_met_count"] <= 4
 
     sensitivity = pd.read_csv(tmp_path / "sensitivity_grid.csv")
+    failure_modes = pd.read_csv(tmp_path / "failure_modes.csv")
+    assert {"code", "gate", "trigger", "evidence", "action"}.issubset(failure_modes.columns)
     required_columns = {
         "service_quantile",
         "holding_cost",

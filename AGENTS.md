@@ -4,10 +4,10 @@ Read this file first, then `harness/INDEX.md`.
 
 Project:
 
-- `industrial-decision-intelligence-lab`
+- `replenishment-policy-gate`
 - portfolio role: Applied AI / Data Systems Engineer
 - project stance: forecasting is useful only when it changes a constrained
-  decision
+  replenishment decision
 
 ## Binding Rule
 

@@ -21,7 +21,7 @@ from .uncertainty import build_lead_time_grid, parse_int_list, summarize_lead_ti
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="decision-lab")
+    parser = argparse.ArgumentParser(prog="replenishment-gate")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser("fetch", help="Download UCI Online Retail II into data/raw")

@@ -1,6 +1,6 @@
 # Harness Index
 
-Project: `industrial-decision-intelligence-lab`
+Project: `replenishment-policy-gate`
 
 Read order:
 

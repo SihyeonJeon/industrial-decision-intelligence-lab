@@ -1,0 +1,6 @@
+code,gate,trigger,evidence,action
+LOW_Q_STOCKOUT,warn,model policy service level below service floor on frontier rows,3 / 4 model frontier rows below 0.90,raise service quantile or keep baseline policy
+LEAD_TIME_FRAGILITY,warn,cost improves but service floor does not survive lead-time grid,12 / 16 lead-time scenarios require baseline or review,check lead-time calibration before using the model policy
+COST_WEIGHT_SENSITIVITY,warn,policy choice changes under holding and stockout cost assumptions,27 / 36 cost scenarios require baseline or review,"treat cost weights as a deployment parameter, not a constant"
+SKU_SERVICE_FLOOR_BREACH,warn,aggregate policy passes while one or more SKUs miss service floor,1 / 12 SKUs below floor; worst=22197 service_delta=-0.064,route flagged SKU rows to SKU-level override review
+FORECAST_METRIC_MISMATCH,warn,forecast improvement or cost reduction does not imply SKU-level service safety,1 service-risk SKUs after forecast-to-policy simulation,"evaluate the operational decision, not forecast error alone"

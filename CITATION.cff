@@ -1,12 +1,12 @@
 cff-version: 1.2.0
 message: "If you use this project, cite the repository and the UCI Online Retail II dataset."
-title: "Industrial Decision Intelligence Lab"
+title: "Replenishment Policy Gate"
 authors:
   - family-names: "Jeon"
     given-names: "Sihyeon"
 year: 2026
 license: MIT
-repository-code: "https://github.com/SihyeonJeon/industrial-decision-intelligence-lab"
+repository-code: "https://github.com/SihyeonJeon/replenishment-policy-gate"
 references:
   - type: dataset
     title: "Online Retail II"
