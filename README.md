@@ -1,61 +1,109 @@
 # Industrial Decision Intelligence Lab
 
-Retail transaction data to inventory policy simulation:
+[![CI](https://github.com/SihyeonJeon/industrial-decision-intelligence-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/SihyeonJeon/industrial-decision-intelligence-lab/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-- aggregate SKU demand
-- forecast short-horizon demand
-- choose base-stock levels under lead time and service target
-- simulate cost, stockouts, and service level
-- compare a seasonal baseline against a model-informed policy
+Forecast-to-inventory simulation on retail transaction data
 
-## Data
+Forecast error is not the result. The useful question is whether a forecast
+changes an inventory policy without breaking the service floor. This repo runs
+that full path: demand aggregation, short-horizon forecasting, base-stock
+policy selection, cost/service simulation, sensitivity checks, and SKU-level
+diagnostics.
 
-Default source: UCI Online Retail II.
+![Service frontier](reports/figures/service_frontier.png)
 
-The raw Excel file is not committed. Download it locally, then run the pipeline.
+## What It Does
 
-## Run
+- builds daily SKU demand from transaction data
+- compares a seasonal baseline against a model-informed forecast
+- chooses base-stock levels under lead-time and service constraints
+- simulates holding cost, stockout cost, service level, and order volume
+- tests cost/service sensitivity across 36 scenarios
+- tests lead-time uncertainty across 16 scenarios
+- writes JSON, CSV, and figure outputs for review
+
+## Current Result
+
+UCI Online Retail II, top 12 SKUs, final 60-day simulation
+
+| Check | Result |
+| --- | ---: |
+| model WAPE | 0.861 |
+| seasonal baseline WAPE | 1.071 |
+| model policy cost | 77,323.91 |
+| baseline policy cost | 174,450.85 |
+| service level | 0.928 |
+| service floor | 0.900 |
+| frontier cost delta | 53.4% lower |
+| sensitivity pass count | 9 / 36 |
+| lead-time pass count | 4 / 16 |
+| SKU service floor pass | 11 / 12 |
+
+The selected model policy passes the current service floor and lowers simulated
+cost on the dataset split. The robustness checks also expose the weak region:
+lower service quantiles save inventory but miss the service floor, and one SKU
+still carries service risk.
+
+Visual case page:
+<https://sihyeonjeon.github.io/projects/industrial-decision-intelligence-lab/>
+
+## Quick Start
 
 ```bash
+git clone https://github.com/SihyeonJeon/industrial-decision-intelligence-lab
+cd industrial-decision-intelligence-lab
 uv sync
+uv run decision-lab run --synthetic --report-dir /tmp/decision-lab-smoke
+```
+
+Run on the default public dataset:
+
+```bash
 uv run decision-lab fetch
 uv run decision-lab run --top-skus 12
 ```
 
-Outputs:
+The raw Excel file is not committed. `decision-lab fetch` downloads Online
+Retail II from UCI into `data/raw/`; see [data/README.md](data/README.md).
 
-- `reports/decision_report.json`
-- `reports/sku_metrics.csv`
-- `reports/service_frontier.csv`
-- `reports/sensitivity_grid.csv`
-- `reports/lead_time_grid.csv`
-- `reports/figures/policy_comparison.png`
-- `reports/figures/service_frontier.png`
-- `reports/figures/sensitivity_grid.png`
-- `reports/figures/lead_time_grid.png`
-- `reports/figures/sku_tradeoffs.png`
+## Outputs
 
-## Result View
+```text
+reports/
+  decision_report.json
+  sku_metrics.csv
+  service_frontier.csv
+  sensitivity_grid.csv
+  lead_time_grid.csv
+  figures/
+    policy_comparison.png
+    service_frontier.png
+    sensitivity_grid.png
+    lead_time_grid.png
+    sku_tradeoffs.png
+```
 
-![Decision sensitivity](reports/figures/sensitivity_grid.png)
+Useful files:
 
-## Current Result
+- [decision_report.json](reports/decision_report.json): summary metrics and
+  decision gate
+- [sku_metrics.csv](reports/sku_metrics.csv): SKU-level forecast and service
+  diagnostics
+- [service_frontier.csv](reports/service_frontier.csv): feasible policy grid
+- [lead_time_grid.csv](reports/lead_time_grid.csv): lead-time robustness grid
 
-UCI Online Retail II, top 12 SKUs, final 60-day simulation:
+## Test
 
-- model WAPE: `0.861` vs seasonal baseline `1.071`
-- model policy cost: `77,323.91` vs baseline `174,450.85`
-- service level: `0.928` vs baseline `0.957`
-- service floor: `0.900`
-- decision gate: `pass`
-- sensitivity: `9 / 36` tested cost-service scenarios pass
-- lead-time uncertainty: `4 / 16` scenarios pass
-- frontier selection: baseline q=`0.95`, model q=`0.99`
-- SKU diagnostics: `11 / 12` model policies meet the service floor
+```bash
+uv run ruff check src tests
+uv run pytest
+```
 
-q=`0.99` is the reliable region in the current grid. Lower service settings
-save inventory but miss the service floor. Under lead-time values from 5 to 14
-days, q=`0.99` is the only tested model setting that keeps the service floor in
-every lead-time scenario.
+CI also runs a synthetic smoke pipeline.
 
-Dataset simulation only. Not production inventory advice.
+## Boundary
+
+Dataset simulation only. Not production inventory advice, not a public
+benchmark, and not a claim that the same policy transfers to another retailer
+without local demand, lead-time, cost, and service calibration.
